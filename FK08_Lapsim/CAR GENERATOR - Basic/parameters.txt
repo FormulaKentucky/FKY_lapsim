@@ -1,0 +1,25 @@
+--ADVANCED--
+Aero
+> NACA Airfoils
+> Angle of Attack for Airfoils
+> > These factors give CD and CL of each component, then find total CL using that
+> Frontal Area
+> Aero Mass
+
+Suspension
+> Incorporate changing fuel mass over laptime
+
+--BASIC--
+Aero
+> CD
+> CL
+> Frontal Area
+> Aero Mass
+
+Suspension
+> Driver Mass
+> Car Mass (w/o fuel)
+> Fuel Mass 
+> Tire Diameter (in)
+> Tire Friction Coefficient
+
