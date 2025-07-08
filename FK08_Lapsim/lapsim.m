@@ -11,4 +11,3 @@ fprintf('Select a track file. \n')
 trackname = uigetfile('*csv');
 disp('Selected: ' + trackname)
 
-gfdjgkdfghkdhgkdhjkfhkdsghk
