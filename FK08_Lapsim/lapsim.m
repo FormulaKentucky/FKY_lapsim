@@ -26,21 +26,21 @@ g = car{2,11};
 rho = car{1,11};
 a = car{3,10};
 cl = car{1,10};
-cd = car{11,8};
+cd = car{2,10};
+cr = car{11,8};
 
 parameters = [mu, m, g, rho, a, cl, cd, cr];
 vmax = zeros(numel(track(:,3)),1);
 
 for i = 1:numel(track(:,3))
     parameters(9) = track{i, 3};
-    %vmax(i) = double(max(abs(vpa(subs(sol, vars, parameters))))); 
-    vmax(i) = max(abs(double(subs(sol, vars, parameters)))); 
+    vmax(i) = double(max(abs(vpa(subs(sol, vars, parameters))))); 
 end
 
 %% Create Final Track/Car Array and Begin Simulation!
 sec_length(:,1) = track{:,2};
 cumdist = zeros(numel(sec_length(:,1)),1);
-for i = 1:numel(seclength(:,1))
+for i = 1:numel(sec_length(:,1))
     cumdist(i) = sum(sec_length(1:i,1));
 end
 
@@ -50,6 +50,4 @@ ven = zeros(numel(sec_length(:,1)),1);
 vex = zeros(numel(sec_length(:,1)),1);
 %vcompi = zeros(numel(sec_length(:,1)),1);
 ven(1) = vini;
-
-
 
