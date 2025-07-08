@@ -36,4 +36,11 @@ for i = 1:numel(track(:,3))
     vmax(i) = double(max(abs(vpa(subs(sol, vars, parameters))))); 
 end
 
+%% Create Final Track/Car Array and Begin Simulation!
+sec_length(:,1) = track{:,2};
+cumdist = zeros(numel(sec_length(:,1)),1);
+for i = 1:numel(seclength(:,1))
+    cumdist(i) = sum(sec_length(1:i,1));
+end
+
 
