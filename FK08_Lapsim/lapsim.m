@@ -33,7 +33,8 @@ vmax = zeros(numel(track(:,3)),1);
 
 for i = 1:numel(track(:,3))
     parameters(9) = track{i, 3};
-    vmax(i) = double(max(abs(vpa(subs(sol, vars, parameters))))); 
+    %vmax(i) = double(max(abs(vpa(subs(sol, vars, parameters))))); 
+    vmax(i) = max(abs(double(subs(sol, vars, parameters)))); 
 end
 
 %% Create Final Track/Car Array and Begin Simulation!
@@ -42,5 +43,13 @@ cumdist = zeros(numel(sec_length(:,1)),1);
 for i = 1:numel(seclength(:,1))
     cumdist(i) = sum(sec_length(1:i,1));
 end
+
+%% Compute Precursor Speeds (Accelerating)
+vini = 18.429;
+ven = zeros(numel(sec_length(:,1)),1);
+vex = zeros(numel(sec_length(:,1)),1);
+%vcompi = zeros(numel(sec_length(:,1)),1);
+ven(1) = vini;
+
 
 
