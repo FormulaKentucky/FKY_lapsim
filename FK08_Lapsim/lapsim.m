@@ -51,3 +51,16 @@ vex = zeros(numel(sec_length(:,1)),1);
 %vcompi = zeros(numel(sec_length(:,1)),1);
 ven(1) = vini;
 
+
+for i = 1:numel(sec_length(:,1))
+    accel = interp1(car{:,1},car{:,3},ven(i));
+    vex(i) = ven(i) + (accel * sec_length(i) / ven(i));
+    if i == numel(sec_length(:,1))
+        break
+    end
+    if vex(i) > vmax(i) 
+        ven(i+1) = vmax(i);
+    else
+        ven(i+1) = vmax(i);
+    end
+end
