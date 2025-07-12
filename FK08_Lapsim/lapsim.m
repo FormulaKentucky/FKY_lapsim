@@ -124,3 +124,5 @@ ylabel('Speed (m/s)')
 gentime = toc;
 
 fprintf('Laptime complete! Time Taken: %.2fs.\nLap Time: %.1fs. Average Velocity: %.1fm/s. Total Distance: %.1fm.\n', gentime, sum(sec_time), mean(vel), sum(sec_length))
+
+% Uyghur
