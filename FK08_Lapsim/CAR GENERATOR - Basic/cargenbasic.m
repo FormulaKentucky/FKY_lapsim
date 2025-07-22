@@ -13,41 +13,50 @@ clc
 %
 % Suspension
 % Diver Mass, Car Mass, Fuel Mass, 
+%% Name your car
+prompt_sus = {'Car Name (without extension):'};
+dlgtitle = 'Car Name';
+fieldsize = [1 40;];
+definput = {'FK08'};
+car_name = inputdlg(prompt_sus,dlgtitle,fieldsize,definput);
 
 %% Aerodynamics
 prompt = {'Coefficient of Lift (CL)','Coefficient of Drag (CD)','Frontal Area','Aero Mass'};
 dlgtitle = 'Aerodynamics Inputs';
 dims = [1, 35];
 definput = {'0.24','0.55', '0.75', '10'}; % Defaults from John's Code
-answer = inputdlg(prompt,dlgtitle,dims,definput);
+answer_aero = inputdlg(prompt,dlgtitle,dims,definput);
 
-CL = str2double(answer(1));
-CD = str2double(answer(2));
-frontalArea = str2double(answer(3));
-aeroMass = str2double(answer(4));
+CL = str2double(answer_aero(1));
+CD = str2double(answer_aero(2));
+frontalArea = str2double(answer_aero(3));
+aeroMass = str2double(answer_aero(4));
 
 %% Suspension
-prompt = {'Driver Mass', 'Car Mass (w/o fuel)', 'Fuel Mass', 'Tire Diameter (in)', 'Tire Friction Coefficeint',
-    'Swept Rotor Diameter (in)', 'Brake Caliper Area (in^2)', 'Brake Caliper Pistons', 'Max. Braking Pressure (PSI)', 'Brake Pad Friction Coefficient'};
+prompt = {'Car Mass (kg):','Driver Mass (kg):', 'Tire Diameter (in):', 'Tire Friction Coefficient:',...
+    'Swept Rotor Diameter (in):', 'Brake Caliper Area (in^2):', 'Brake Caliper Pistons:', 'Max. Braking Pressure (PSI):', 'Brake Pad Friction Coefficient:','Fuel Mass'};
 dlgtitle = 'Suspension Inputs';
 dims = [1, 35];
-definput = {'60','154','13.6','16','1.4','6.6','0.79','2','2000','0.5'}; % Defaults from John's Code
-answer = inputdlg(prompt,dlgtitle,dims,definput); % definput can be used to get default inputs once I have imported data
+definput = {'154','60','16','1.4','6.6','0.79','2','2000','0.5','6'}; % Defaults from John's Code
+answer_sus = inputdlg(prompt,dlgtitle,dims,definput); % definput can be used to get default inputs once I have imported data
 
-driverMass = str2double(answer(1));
-carMass = str2double(answer(2));
-fuelMass = str2double(answer(3));
+driverMass = str2double(answer_sus(2));
+carMass = str2double(answer_sus(1));
+fuelMass = str2double(answer_sus(10));
 totalMass = driverMass + carMass + fuelMass; % Without aero and engine masses
-tireDiameter = str2double(answer(4)) * 0.0127; % Converted from in to m
-tireFrictionCoeff = str2double(answer(5));
-sweptRotorDiameter = str2double(answer(6));
-brakeCaliperArea = str2double(answer(7));
-brakeCaliperPistons = str2double(answer(8));
-maxBrakingPressure = str2double(answer(9));
-brakePadFrictionCoeff = str2double(answer(10));
+tireDiameter = str2double(answer_sus(3)) * 0.0254; % Converted from in to m
+tireFrictionCoeff = str2double(answer_sus(4));
+sweptRotorDiameter = str2double(answer_sus(5));
+brakeCaliperArea = str2double(answer_sus(6));
+brakeCaliperPistons = str2double(answer_sus(7));
+maxBrakingPressure = str2double(answer_sus(8));
+brakePadFrictionCoeff = str2double(answer_sus(9));
 
 %% Powertrain / Engine
+file_suff = '_dat';
+file_ext = '.csv';
 engine_filename = 'cbr_dat.csv';
+filename_finished = append(car_name{1}, '_', 'CBR600RR', file_ext); % define file name for finished car data file
 engine_data = readmatrix(engine_filename);
 rpmLog = engine_data(:,1);
 maxRpm = max(rpmLog);
@@ -55,10 +64,11 @@ torqueLog = engine_data(:,2);
 gears = engine_data(1:6,3);
 clutchRatio = engine_data(1,4);
 sprocketRatio = engine_data(1,5);
-weightKg = engine_data(1,6);
-totalMass = weightKg + totalMass;
+engineMass = engine_data(1,6);
+totalMass = engineMass + totalMass;
 shiftTime = engine_data(1,7);
 coeffRolling = engine_data(1,8);
+gear_ct = sum(~isnan(engine_data(:,3)));
 
 %% Establish Constants
 g = 9.81; % gravity in m/s^2
@@ -92,10 +102,11 @@ totalNormalForce = aeroForce + massForce;
 drag = CD * (1/2) * rho * velocity.^2 * frontalArea;
 
 %% Forward Tractive Forces
-rpmTable = zeros(numel(velocity),numel(gears));
-tracTable = zeros(numel(velocity),numel(gears));
-fTrac = zeros(numel(velocity),numel(gears));
-for i = 1:numel(gears)   
+rpmTable = zeros(numel(velocity),gear_ct);
+tracTable = zeros(numel(velocity),gear_ct);
+fTrac = zeros(numel(velocity),2);
+
+for i = 1:gear_ct   
     for j = 1:numel(velocity)
         rpmTable(j,i) = (60 * velocity(j) / (pi * tireDiameter)) * sprocketRatio * clutchRatio * gears(i); % loop fills all 6 gear accel rows with their corresponding engine rpm
         tracTable(j,i) = interp1(rpmLog,torqueLog,rpmTable(j,i),'spline')*(sprocketRatio * gears(i))/(tireDiameter / 2);  % calculate forward tractive force given an rpm
@@ -106,10 +117,14 @@ for i = 1:numel(gears)
             rpmTable(j, i) = NaN;
             tracTable(j, i) = NaN;
         end
-        if tracTable(j, i) == max(tracTable(j, 1:numel(gears))) % store best gear value in tractive force table
+        if tracTable(j, i) == max(tracTable(j, 1:gear_ct)) % store best gear value in tractive force table
             fTrac(j, 2) = i;
         end
     end
+end
+
+for i = 1:numel(velocity) % generate tractive force table
+    fTrac(i,1) = max(tracTable(i,:));
 end
 
 %% Tractive Force Graph
@@ -163,8 +178,29 @@ xlabel('Velocity [m/s]');
 ylabel('Acceleration [m/s^2]');
 
 %% Generate Final Car File for Simulation
-
-
-
+carFile = ax;
+carFile(1:numel(rpmLog),6) = rpmLog';
+carFile(1:numel(torqueLog),7) = torqueLog';
+carFile(1:numel(gears), 8) = gears(:);
+carFile(1+numel(gears), 8) = clutchRatio;
+carFile(2+numel(gears),8) = sprocketRatio;
+carFile(3+numel(gears),8) = engineMass;
+carFile(4+numel(gears),8) = shiftTime;
+carFile(5+numel(gears),8) = coeffRolling;
+for i = 1:numel(answer_sus)
+    carFile(i,9) = str2double(answer_sus{i});
+end
+for i = 1:numel(answer_aero)
+    carFile(i,10) = str2double(answer_aero{i});
+end
+carFile(1,11) = rho;
+carFile(2,11) = g;
+carFile(3,11) = totalMass;
+carFileTable = table(carFile(:,1), carFile(:,2), carFile(:,3), carFile(:,4), ...
+    carFile(:,5), carFile(:,6), carFile(:,7), carFile(:,8), carFile(:,9), ...
+    carFile(:,10), carFile(:,11), 'VariableNames', ["Velocity [m/s]", ...
+    "Normal Force [N]", "Ax [m/s^2]","Abx [m/s^2]","Gear","RPM","Torque [Nm]", ...
+    "Drivetrain Info","Suspension Info","Aero Info","Physics Info"]);
+writetable(carFileTable, filename_finished);
 
 disp("Done!");
